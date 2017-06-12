@@ -1,0 +1,109 @@
+|===
+| Master Build | NPM Stable | Snapshots
+| image:https://img.shields.io/teamcity/http/teamcity.simplicityitself.com/e/OpenSource_MuonReleases_TransportsDiscoveries_AmqpSnapshot.svg[Status]
+| image:https://img.shields.io/npm/v/muon-amqp.svg[NPM]
+| image:https://img.shields.io/npm/v/muon-amqp/next.svg[NPM]
+|===
+
+# Muon TCP Transport
+
+## What is a Muon Transport?
+
+Muon is a set of libraries and services that let you build highly effective distributed systems that are message and event oriented.
+
+Muon is structured as a set of libraries, known as `muon-core` that give a set of infrastructure for building messaging systems. These are available in multiple languages and handle the concerns of discovery, transport, encoding and managing failures. On top of these, the exact messaging semantics that you want to express are built. These are built as a "stack", a set of channels, agents and finally a user facing API that you will use in your application code. These messages need to be transferred between your services to enable them to communicate. A Muon Transport enables this communication by giving a standard bidirectional channel like interface between them that they can exchange messages over
+
+Muon can have multiple transports active at the same time, and chooses the most appropriate one to use to connect to the remote system. Connections to remote systems are fully multiplexed/ pipelined, giving the lowest latency and performance while also conserving system resources.
+
+## Using the TCP Transport on the JVM
+
+To use the transport in Java, first import Muon and the transport. Here, we include the TCP transport, along with a discovery. In a real system, you would add a messaging stack to give you an API to work with.
+
+*build.gradle*
+[source, groovy]
+----
+repositories {
+    jcenter()
+    maven { url 'https://simplicityitself.artifactoryonline.com/simplicityitself/muon' }
+    maven { url 'https://simplicityitself.artifactoryonline.com/simplicityitself/muon-snapshot' }
+}
+
+dependencies {
+    compile "io.muoncore:muon-core:$muonVersion"
+    compile "io.muoncore:muon-transport-tcp:0.0.1-SNAPSHOT"
+}
+----
+
+### Create a Muon connected using TCP
+
+To use the TCP Transport, you need to set the properties `muon.transport.factories`. These should be set to the appropriate TCP version. Muon will then instantiate the factories and use them to create the Factory instances for it to use.
+
+[source, java]
+----
+
+AutoConfiguration config = MuonConfigBuilder.withServiceIdentifier("my-service").withTags("awesome") <1>
+                .addWriter(c -> {
+                    c.getProperties().setProperty(
+                            "muon.transport.factories",
+                            "io.muoncore.transport.tcp.TCPTransportFactory");                  <2>
+                }).build();
+
+Muon muon = MuonBuilder
+        .withConfig(config).build();          <3>
+
+//... add a stack to the muon.
+
+----
+<1> Create a new config
+<3> Set the transport to be TCP
+<4> Build a Muon instance from the given config.
+
+This will now be available. You can check this using the Muon CLI.
+
+```
+export MUON_URL=amqp://muon:microservices@localhost
+muon discover
+```
+
+## Using the transport and discovery on Node.js
+
+To use this, import Muon and the transport
+
+```
+npm install --save muon-core@next
+npm install --save muon-amqp@next
+```
+
+Then, create a Muon instance
+
+*index.js*
+[source, javascript]
+----
+
+var Muon = require("muon-core")
+
+require("muon-amqp").attach(Muon)
+
+var muon = Muon.create("amqp://localhost")
+
+// ... attach a stack, interact with other services, etc.
+
+
+----
+
+## Getting involved/ adding to this transport
+
+Additions and extensions to this stack are very welcome. Add issues and PRs to the repo.
+
+## License
+
+All code is Copyright (c) Muon Core Ltd 2017.
+
+Muon is Free Software, licensed under the terms of
+the LGPLv3 license as included in link:LICENSE[]
+
+Muon has a commercial-friendly license allowing private forks and closed modifications of all projects, alongside enterprise support and extended support for enterprise technologies and patterns.
+
+This will enable you to use Muon in any situation where your legal team will not accept a Free Software license.
+
+Please see http://muoncore.io/pro/ for more detail.  You can find the commercial license terms in COMM-LICENSE.
